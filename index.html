@@ -142,7 +142,7 @@
             color: #00ff41;
             font-family: 'Courier New', Courier, monospace;
             font-size: 0.75rem;
-            padding: 10px;
+            padding: 10px 84px 10px 10px; /* space for the button */
             overflow-y: auto;
             border-top: 2px solid var(--accent-color);
             z-index: 1000;
@@ -151,6 +151,20 @@
             margin: 2px 0;
             white-space: pre-wrap;
             word-break: break-all;
+        }
+
+        #copy-logs-btn {
+            position: fixed;
+            right: 10px;
+            bottom: calc(15vh + 10px);
+            z-index: 1100;
+            background: var(--primary-text);
+            color: #0d1b2a;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 700;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
     </style>
 </head>
@@ -180,6 +194,9 @@
         </div>
     </main>
 
+    <!-- Copy logs button -->
+    <button id="copy-logs-btn" aria-label="Copy debug logs">Copy logs</button>
+
     <div id="debug-output">
         <p><strong>--- DEBUG LOG ---</strong></p>
     </div>
@@ -200,8 +217,33 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             logToDebug("Page loaded. Initializing tracker...");
+            wireCopyLogs();
             getLocation();
         });
+
+        function wireCopyLogs() {
+            const btn = document.getElementById('copy-logs-btn');
+            btn.addEventListener('click', async () => {
+                const text = debugLog.innerText || '';
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(text);
+                        logToDebug("✅ Logs copied to clipboard.");
+                    } else {
+                        // Fallback for older browsers
+                        const ta = document.createElement('textarea');
+                        ta.value = text;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        logToDebug("✅ Logs copied (fallback).");
+                    }
+                } catch (e) {
+                    logToDebug("❌ Failed to copy logs: " + (e && e.message ? e.message : e));
+                }
+            });
+        }
 
         function getLocation() {
             logToDebug("Attempting to get location...");
@@ -265,9 +307,15 @@
             moonEl.innerHTML = `<div class="data-display">${phaseEmoji}</div><div class="data-subtext">${phaseName}</div><p>${illuminationPercent}% Illuminated</p>`;
         }
 
+        /**
+         * Fetch sea level (tide-like) data.
+         * Open-Meteo Marine API variable: sea_level_height_msl (metres).
+         * Note: Accuracy can be limited near complex coastlines and unreliable inland.
+         */
         async function fetchTideData(lat, lon) {
             const tideEl = document.getElementById('tide-data');
-            const apiUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=tide&timezone=auto`;
+            // Use hourly sea level vs mean sea level; timezone=auto returns local timestamps
+            const apiUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=sea_level_height_msl&timezone=auto`;
             
             logToDebug(`Fetching tide data from URL: ${apiUrl}`);
             
@@ -282,29 +330,49 @@
                     throw new Error(data.reason || `API error: ${response.statusText}`);
                 }
 
-                if (data && data.hourly && data.hourly.time && data.hourly.tide) {
-                    const times = data.hourly.time;
-                    const tides = data.hourly.tide;
+                if (data && data.hourly && data.hourly.time && data.hourly.sea_level_height_msl) {
+                    const times = data.hourly.time.map(t => new Date(t));
+                    const levels = data.hourly.sea_level_height_msl;
+                    const unit = data.hourly_units && (data.hourly_units.sea_level_height_msl || "m");
+
                     const now = new Date();
-                    const currentTimeISO = now.toISOString().slice(0, 13) + ":00";
-                    const currentIndex = times.indexOf(currentTimeISO);
-                    
-                    if (currentIndex === -1) {
-                         throw new Error("Could not find current hour in tide forecast.");
+
+                    // Find the index of the hour that is <= now (local) and closest.
+                    let idx = -1;
+                    for (let i = 0; i < times.length; i++) {
+                        if (times[i].getTime() <= now.getTime()) idx = i; else break;
+                    }
+                    if (idx === -1) {
+                        // Fallback: choose the nearest hour by absolute difference
+                        let minDiff = Infinity;
+                        for (let i = 0; i < times.length; i++) {
+                            const d = Math.abs(times[i].getTime() - now.getTime());
+                            if (d < minDiff) { minDiff = d; idx = i; }
+                        }
                     }
 
-                    const currentTide = tides[currentIndex];
-                    const tideUnit = data.hourly_units.tide;
-                
+                    if (idx === -1) throw new Error("Could not match current time to hourly sea level.");
+
+                    const currentLevel = levels[idx];
+                    
+                    // Map sea level (m) to a simple visualization height.
+                    // Clamp from -1.5m..+1.5m -> 0%..100% (purely illustrative)
+                    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+                    const pct = ((clamp(currentLevel, -1.5, 1.5) + 1.5) / 3.0) * 100;
+                    const translateY = 100 - pct; // water rises with higher level
+
                     tideEl.innerHTML = `
-                        <div class="data-display">${currentTide.toFixed(2)}${tideUnit}</div>
-                        <div class="data-subtext">Above Mean Sea Level</div>
+                        <div class="data-display">${Number(currentLevel).toFixed(2)}${unit}</div>
+                        <div class="data-subtext">Sea Level vs MSL (illustrative)</div>
                         <div class="tide-visualizer">
-                            <div class="tide-wave" style="transform: translateY(${50 - (currentTide * 10)}%);"></div>
+                            <div class="tide-wave" style="transform: translateY(${translateY}%);"></div>
                         </div>
+                        <p class="data-subtext" style="margin-top:8px;color:var(--secondary-text)">
+                            Timestamp: ${times[idx].toLocaleString()}
+                        </p>
                     `;
                 } else {
-                    throw new Error("Hourly tide data not available in the API response.");
+                    throw new Error("Hourly sea level data not available in the API response.");
                 }
 
             } catch (error) {
@@ -316,4 +384,4 @@
     </script>
 
 </body>
-</html>
+</html>.
