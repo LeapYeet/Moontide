@@ -2,214 +2,71 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, user-scalable=no"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Coastal Tracker</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
 
   <style>
-    :root {
-      --bg: #0b1220;
-      --card: #111a2c;
-      --text: #e8ebf1;
-      --muted: #9fb0c9;
-      --accent: #2a77ff;
-      --accent-2: #1b335c;
-      --good: #43d17d;
-      --warn: #ffcc66;
-      --bad: #ff6b6b;
-      --chip: rgba(255, 255, 255, 0.08);
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-      --radius: 18px;
+    :root{
+      --bg:#0b1220;
+      --card:#111a2c;
+      --card-2:#0f1726;
+      --text:#e8ebf1;
+      --muted:#9fb0c9;
+      --chip:rgba(255,255,255,.08);
+      --chip-br:rgba(255,255,255,.10);
+      --good:#43d17d;
+      --warn:#ffcc66;
+      --radius:18px;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --border:1px solid rgba(255,255,255,.06);
     }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%;background:radial-gradient(1200px 700px at 50% -200px,#102140,var(--bg));color:var(--text);font-family:'Montserrat',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{width:min(1100px,92vw);margin:22px auto 22px;display:grid;gap:18px}
+    .title{margin-top:6px;text-align:center;font-weight:700;letter-spacing:.6px;color:var(--muted);text-transform:uppercase;font-size:.9rem}
 
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      height: 100%;
-      background: radial-gradient(1200px 700px at 50% -200px, #102140, var(--bg));
-      color: var(--text);
-      font-family: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    }
+    .cards{display:grid;gap:18px}
+    @media (min-width:900px){.cards{grid-template-columns:1fr 1fr 1fr}}
 
-    .wrap {
-      width: min(1100px, 92vw);
-      margin: 22px auto calc(15vh + 22px);
-      display: grid;
-      gap: 18px;
-      grid-template-columns: 1fr;
-    }
+    .card{background:linear-gradient(180deg,var(--card),var(--card-2));border-radius:var(--radius);padding:18px 18px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden;border:var(--border)}
+    .card h2{margin:0 0 8px;font-size:.9rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);display:flex;align-items:center;gap:8px}
+    .emoji{font-size:1.1rem}
 
-    .title {
-      text-align: center;
-      font-weight: 700;
-      letter-spacing: .6px;
-      color: var(--muted);
-      text-transform: uppercase;
-      font-size: .9rem;
-    }
+    .big{font-size:2.6rem;font-weight:800;letter-spacing:.5px;margin:2px 0 6px}
+    .sub{color:var(--muted);font-weight:300;font-size:.98rem}
 
-    .cards {
-      display: grid;
-      gap: 18px;
-    }
-    @media (min-width: 900px) {
-      .cards { grid-template-columns: 1fr 1fr 1fr; }
-    }
+    .row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;margin-top:8px}
+    .pill{background:var(--chip);border:1px solid var(--chip-br);border-radius:999px;padding:6px 10px;font-size:.82rem;line-height:1}
+    .pill.ok{background:rgba(67,209,125,.12);border-color:rgba(67,209,125,.25)}
+    .pill.warn{background:rgba(255,204,102,.12);border-color:rgba(255,204,102,.25)}
+    .pill.ghost{background:transparent;border-color:var(--chip-br)}
 
-    .card {
-      background: linear-gradient(180deg, var(--card), #0f1726);
-      border-radius: var(--radius);
-      padding: 18px 18px 20px;
-      box-shadow: var(--shadow);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .card h2 {
-      margin: 0 0 8px;
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .card h2 .emoji { font-size: 1.1rem; }
-
-    .big {
-      font-size: 2.6rem;
-      font-weight: 800;
-      letter-spacing: .5px;
-      margin: 2px 0 6px;
-    }
-
-    .sub {
-      color: var(--muted);
-      font-weight: 300;
-      font-size: 0.98rem;
-    }
-
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 10px 12px;
-      margin-top: 8px;
-    }
-
-    .pill {
-      background: var(--chip);
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 0.78rem;
-      color: var(--text);
-      border: 1px solid rgba(255,255,255,.06);
-    }
-    .pill.ok { background: rgba(67,209,125,.12); border-color: rgba(67,209,125,.25); }
-    .pill.warn { background: rgba(255,204,102,.12); border-color: rgba(255,204,102,.25); }
-    .pill.bad { background: rgba(255,107,107,.12); border-color: rgba(255,107,107,.25); }
+    .loader{border:5px solid #213154;border-top:5px solid #eaf2ff;border-radius:50%;width:42px;height:42px;animation:spin 1s linear infinite;margin:12px auto}
+    @keyframes spin{to{transform:rotate(360deg)}}
 
     /* Wave bar */
-    .bar {
-      margin-top: 14px;
-      height: 70px;
-      background: linear-gradient(180deg, #2a3e63, #283c5f);
-      border-radius: 14px;
-      overflow: hidden;
-      position: relative;
-      border: 1px solid rgba(255,255,255,.06);
-    }
-    .wave {
-      position: absolute;
-      inset: 0;
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 240 40"><path fill="%23eaf2ff" fill-opacity="0.6" d="M0,22 C20,10 40,34 60,22 C80,10 100,34 120,22 C140,10 160,34 180,22 C200,10 220,34 240,22 L240,40 L0,40 Z"/></svg>');
-      background-repeat: repeat-x;
-      background-size: 240px 100%;
-      animation: wave 8s linear infinite;
-      will-change: background-position, transform;
-      transform: translateY(60%); /* will be overridden */
-      transition: transform .9s cubic-bezier(.22,1,.36,1);
-    }
-    @keyframes wave {
-      from { background-position: 0 0; }
-      to   { background-position: -240px 0; }
-    }
+    .bar{margin-top:14px;height:70px;background:linear-gradient(180deg,#2a3e63,#283c5f);border-radius:14px;overflow:hidden;position:relative;border:var(--border)}
+    .wave{position:absolute;inset:0;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 240 40"><path fill="%23eaf2ff" fill-opacity="0.6" d="M0,22 C20,10 40,34 60,22 C80,10 100,34 120,22 C140,10 160,34 180,22 C200,10 220,34 240,22 L240,40 L0,40 Z"/></svg>');background-repeat:repeat-x;background-size:240px 100%;animation:wave 8s linear infinite;will-change:background-position,transform;transform:translateY(60%);transition:transform .9s cubic-bezier(.22,1,.36,1)}
+    @keyframes wave{from{background-position:0 0}to{background-position:-240px 0}}
 
     /* Sparkline */
-    .spark {
-      width: 100%;
-      height: 70px;
-      margin-top: 14px;
-      border-radius: 12px;
-      background: linear-gradient(180deg, #112142, #0f1a34);
-      border: 1px solid rgba(255,255,255,.06);
-      display: grid;
-      place-items: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .spark svg { width: 100%; height: 70px; display: block; }
-    .nowline {
-      stroke: rgba(255,255,255,.45);
-      stroke-dasharray: 4 4;
-    }
+    .spark{width:100%;height:86px;margin-top:14px;border-radius:12px;background:linear-gradient(180deg,#112142,#0f1a34);border:var(--border);position:relative;overflow:hidden;touch-action:none}
+    .spark svg{width:100%;height:86px;display:block}
+    .nowline{stroke:rgba(255,255,255,.45);stroke-dasharray:4 4}
+    .marker{stroke:#eaf2ff;stroke-width:2}
+    .tooltip{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.55);border:var(--border);border-radius:10px;padding:6px 8px;font-size:.8rem;color:#eaf2ff;pointer-events:none}
 
-    .loader {
-      border: 5px solid #213154;
-      border-top: 5px solid #eaf2ff;
-      border-radius: 50%;
-      width: 42px; height: 42px;
-      animation: spin 1s linear infinite;
-      margin: 12px auto;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .hint{color:var(--muted);font-size:.85rem;margin-top:10px;line-height:1.45}
 
-    .hint {
-      color: var(--muted);
-      font-size: .85rem;
-      margin-top: 10px;
-      line-height: 1.45;
-    }
+    /* Debug dock (hidden but alive) */
+    #debug{position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;visibility:hidden}
+    #copy{position:fixed;right:10px;bottom:10px;z-index:1100;background:#eaf2ff;color:#0b1220;border:none;border-radius:12px;padding:10px 14px;font-weight:800;box-shadow:var(--shadow)}
 
-    /* Debug dock */
-    #debug {
-      position: fixed;
-      left: 0; right: 0; bottom: 0;
-      height: 15vh;
-      background: rgba(0,0,0,.84);
-      border-top: 1px solid rgba(255,255,255,.1);
-      color: #9efc8d;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: .78rem;
-      padding: 10px 88px 10px 12px;
-      overflow: auto;
-      z-index: 1000;
-    }
-    #debug p { margin: 2px 0; white-space: pre-wrap; word-break: break-word; }
-    #copy {
-      position: fixed;
-      right: 10px;
-      bottom: calc(15vh + 10px);
-      z-index: 1100;
-      background: #eaf2ff;
-      color: #0b1220;
-      border: none;
-      border-radius: 12px;
-      padding: 10px 14px;
-      font-weight: 800;
-      box-shadow: var(--shadow);
-    }
   </style>
 </head>
 <body>
@@ -229,243 +86,277 @@
       <!-- Moon -->
       <section class="card">
         <h2><span class="emoji">🌙</span> Moon</h2>
-        <div id="moon">
-          <div class="loader"></div>
-        </div>
+        <div id="moon"><div class="loader"></div></div>
       </section>
 
       <!-- Sea Level -->
       <section class="card">
         <h2><span class="emoji">🌊</span> Sea Level (MSL)</h2>
-        <div id="sea">
-          <div class="loader"></div>
-        </div>
-        <div class="hint">
-          Values are <b>sea level vs Mean Sea Level (MSL)</b>, not chart datum (LAT).  
-          For navigation, use official tide tables.
-        </div>
+        <div id="sea"><div class="loader"></div></div>
+        <div class="hint">Values are <b>sea level vs Mean Sea Level (MSL)</b>, not chart datum (LAT). For navigation, use official tide tables.</div>
       </section>
     </div>
   </div>
 
+  <!-- Hidden debug + floating copy button -->
   <button id="copy" aria-label="Copy debug logs">Copy logs</button>
   <div id="debug"><p><strong>--- DEBUG LOG ---</strong></p></div>
 
   <script>
-    // ---------- Debug ----------
+    // ---------- Debug (hidden dock) ----------
     const debug = document.getElementById('debug');
-    function log(msg) {
+    function log(msg){
       console.log(msg);
-      const p = document.createElement('p');
-      p.textContent = `[${new Date().toLocaleTimeString()}] ` + (typeof msg === 'object' ? JSON.stringify(msg, null, 2) : msg);
+      const p=document.createElement('p');
+      p.textContent=`[${new Date().toLocaleTimeString()}] `+(typeof msg==='object'?JSON.stringify(msg,null,2):msg);
       debug.appendChild(p);
-      debug.scrollTop = debug.scrollHeight;
     }
-    document.getElementById('copy').addEventListener('click', async () => {
-      const text = debug.innerText || '';
-      try {
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(text);
-        } else {
-          const ta = document.createElement('textarea');
-          ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
-        }
+    document.getElementById('copy').addEventListener('click',async()=>{
+      const text=debug.innerText||'';
+      try{
+        if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);}
+        else{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}
+        // tiny toast via alert-free log line
         log('✅ Logs copied to clipboard.');
-      } catch (e) { log('❌ Copy failed: ' + (e?.message || e)); }
+      }catch(e){log('❌ Copy failed: '+(e?.message||e));}
     });
 
     // ---------- App ----------
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded',()=>{
       log('Page loaded. Initializing…');
-      if (!navigator.geolocation) {
-        document.getElementById('loc').innerHTML = '<div class="sub" style="color:#ff8a8a">Geolocation not supported.</div>';
+      if(!navigator.geolocation){
+        document.getElementById('loc').innerHTML='<div class="sub" style="color:#ff8a8a">Geolocation not supported.</div>';
         return;
       }
-      navigator.geolocation.getCurrentPosition(onPos, onPosErr);
+      navigator.geolocation.getCurrentPosition(onPos,onPosErr);
     });
 
-    function onPosErr(err) {
-      log('Location ERROR');
-      log(err);
-      document.getElementById('loc').innerHTML = `<div class="sub" style="color:#ff8a8a">${err.message}</div>`;
-      document.getElementById('moon').innerHTML = `<div class="sub">Cannot fetch without location.</div>`;
-      document.getElementById('sea').innerHTML = `<div class="sub">Cannot fetch without location.</div>`;
+    function onPosErr(err){
+      log('Location ERROR'); log(err);
+      document.getElementById('loc').innerHTML=`<div class="sub" style="color:#ff8a8a">${err.message}</div>`;
+      document.getElementById('moon').innerHTML=`<div class="sub">Cannot fetch without location.</div>`;
+      document.getElementById('sea').innerHTML=`<div class="sub">Cannot fetch without location.</div>`;
     }
 
-    function onPos(pos) {
-      log('Location success');
-      log(pos.coords);
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
-      document.getElementById('loc').innerHTML = `
+    function onPos(pos){
+      log('Location success'); log(pos.coords);
+      const lat=pos.coords.latitude, lon=pos.coords.longitude;
+      document.getElementById('loc').innerHTML=`
         <div class="row">
-          <div class="pill">Lat ${lat.toFixed(4)}</div>
-          <div class="pill">Lon ${lon.toFixed(4)}</div>
-          ${typeof pos.coords.accuracy === 'number' ? `<div class="pill">±${Math.round(pos.coords.accuracy)} m</div>` : ''}
-        </div>
-      `;
+          <span class="pill">Lat ${lat.toFixed(4)}</span>
+          <span class="pill">Lon ${lon.toFixed(4)}</span>
+          ${typeof pos.coords.accuracy==='number'?`<span class="pill">±${Math.round(pos.coords.accuracy)} m</span>`:''}
+        </div>`;
       renderMoon(new Date());
-      fetchSea(lat, lon);
+      fetchSea(lat,lon);
     }
 
     // ---------- Moon ----------
-    function renderMoon(date) {
+    function renderMoon(date){
       log('Fetching moon phase…');
-      const m = SunCalc.getMoonIllumination(date);
-      log({ moonInfo: m });
-      const phase = m.phase;
-      let name = '', emoji = '';
-      if (phase < 0.03 || phase > 0.97) { name = 'New Moon'; emoji = '🌑'; }
-      else if (phase < 0.22) { name = 'Waxing Crescent'; emoji = '🌒'; }
-      else if (phase < 0.28) { name = 'First Quarter'; emoji = '🌓'; }
-      else if (phase < 0.47) { name = 'Waxing Gibbous'; emoji = '🌔'; }
-      else if (phase < 0.53) { name = 'Full Moon'; emoji = '🌕'; }
-      else if (phase < 0.72) { name = 'Waning Gibbous'; emoji = '🌖'; }
-      else if (phase < 0.78) { name = 'Last Quarter'; emoji = '🌗'; }
-      else { name = 'Waning Crescent'; emoji = '🌘'; }
-      const pct = (m.fraction * 100).toFixed(1);
-      document.getElementById('moon').innerHTML = `
+      const m=SunCalc.getMoonIllumination(date); log({moonInfo:m});
+      const phase=m.phase;
+      let name='', emoji='';
+      if(phase<0.03||phase>0.97){name='New Moon';emoji='🌑';}
+      else if(phase<0.22){name='Waxing Crescent';emoji='🌒';}
+      else if(phase<0.28){name='First Quarter';emoji='🌓';}
+      else if(phase<0.47){name='Waxing Gibbous';emoji='🌔';}
+      else if(phase<0.53){name='Full Moon';emoji='🌕';}
+      else if(phase<0.72){name='Waning Gibbous';emoji='🌖';}
+      else if(phase<0.78){name='Last Quarter';emoji='🌗';}
+      else {name='Waning Crescent';emoji='🌘';}
+      const pct=(m.fraction*100).toFixed(1);
+      document.getElementById('moon').innerHTML=`
         <div class="big">${emoji}</div>
         <div class="sub" style="font-weight:700">${name}</div>
-        <div class="sub">${pct}% Illuminated</div>
+        <div class="sub">${pct}% Illuminated</div>`;
+    }
+
+    // ---------- Sea level (interactive) ----------
+    async function fetchSea(lat,lon){
+      const el=document.getElementById('sea');
+      const url=`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=sea_level_height_msl&timezone=auto`;
+      log('Fetching sea level: '+url);
+      try{
+        const r=await fetch(url); const data=await r.json();
+        log('Sea API Response:'); log(data);
+        if(!r.ok||data.error) throw new Error(data.reason||r.statusText);
+
+        const times=(data.hourly?.time||[]).map(t=>new Date(t));
+        const levels=data.hourly?.sea_level_height_msl||[];
+        const unit=(data.hourly_units&&data.hourly_units.sea_level_height_msl)||'m';
+        if(!times.length||!levels.length) throw new Error('No hourly sea level in response.');
+
+        // index at/just before now
+        const now=new Date(); let idx=0;
+        for(let i=0;i<times.length;i++){ if(times[i]<=now) idx=i; else break; }
+
+        renderSea(el,times,levels,unit,data.timezone_abbreviation,idx,true);
+      }catch(e){
+        log('Sea fetch ERROR: '+(e?.message||e));
+        el.innerHTML=`<div class="sub" style="color:#ff8a8a">Could not fetch sea level.</div><div class="hint">${e?.message||e}</div>`;
+      }
+    }
+
+    function renderSea(container,times,levels,unit,tzAbbr,idxNow,snapToNow){
+      const cur=Number(levels[idxNow]);
+
+      // daily window for min/max
+      const start=Math.max(0,idxNow-12), end=Math.min(levels.length-1,idxNow+12);
+      const slice=levels.slice(start,end+1);
+      const dayMin=Math.min(...slice), dayMax=Math.max(...slice);
+
+      const pct=(dayMax-dayMin)>0 ? (cur-dayMin)/(dayMax-dayMin) : 0.5;
+      const status=pctToLabel(pct);
+
+      const prev=levels[Math.max(0,idxNow-2)];
+      const trend=cur-prev; const trendText=trend>0.02?'Rising':trend<-0.02?'Falling':'Steady';
+
+      const {hi,lo}=findExtremes(levels,idxNow,12);
+      const hiTxt=hi?`High ≈ ${times[hi.i].toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (${hi.v.toFixed(2)}${unit})`:'';
+      const loTxt=lo?`Low ≈ ${times[lo.i].toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (${lo.v.toFixed(2)}${unit})`:'';
+
+      // spark window: slightly before now and 48h ahead
+      const sStart=Math.max(0,idxNow-6), sEnd=Math.min(levels.length-1,idxNow+48);
+      const arr=levels.slice(sStart,sEnd+1);
+      const tarr=times.slice(sStart,sEnd+1);
+      const selIndexInitial = snapToNow ? (idxNow - sStart) : 0;
+
+      const waveY=100 - Math.max(0,Math.min(100,pct*100));
+
+      container.innerHTML=`
+        <div class="big" id="seaValue">${cur.toFixed(2)}${unit}</div>
+        <div class="sub" id="seaStatus">
+          Sea level vs <b>MSL</b> —
+          <span class="pill ${status.cls}" id="levelLabel">${status.label}</span>
+          <span class="pill" id="trendLabel">${trendText}</span>
+        </div>
+
+        <div class="bar" title="Illustrative wave height mapped to daily min–max">
+          <div class="wave" id="wave" style="transform: translateY(${waveY}%);"></div>
+        </div>
+
+        <div class="spark" id="spark" aria-label="Interactive 48h sea level sparkline"></div>
+
+        <div class="row" style="margin-top:10px">
+          <button class="pill ghost" id="snapNow">Now: ${times[idxNow].toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (${tzAbbr||''})</button>
+          <span class="pill">Day min: ${dayMin.toFixed(2)}${unit}</span>
+          <span class="pill">Day max: ${dayMax.toFixed(2)}${unit}</span>
+          <span class="pill" id="selReadout" style="display:none"></span>
+        </div>
+
+        <div class="hint" style="margin-top:8px">Est. extremes (heuristic): ${[hiTxt,loTxt].filter(Boolean).join(' • ')}</div>
       `;
+
+      buildInteractiveSpark(
+        document.getElementById('spark'),
+        tarr, arr,
+        selIndexInitial,
+        (selIdx)=>{ // onChange
+          const absIdx = sStart + selIdx;
+          const v = arr[selIdx];
+          const t = tarr[selIdx];
+          const nowIdx = idxNow;
+
+          // recalc status vs today's min/max for the selected point
+          const startSel=Math.max(0,absIdx-12), endSel=Math.min(levels.length-1,absIdx+12);
+          const sliceSel=levels.slice(startSel,endSel+1);
+          const dMin=Math.min(...sliceSel), dMax=Math.max(...sliceSel);
+          const selPct=(dMax-dMin)>0 ? (v-dMin)/(dMax-dMin) : 0.5;
+          const st=pctToLabel(selPct);
+          const prevSel=levels[Math.max(0,absIdx-2)];
+          const tr=v-prevSel; const trText=tr>0.02?'Rising':tr<-0.02?'Falling':'Steady';
+
+          // UI updates
+          document.getElementById('seaValue').textContent = v.toFixed(2)+unit;
+          document.getElementById('levelLabel').textContent = st.label;
+          document.getElementById('levelLabel').className = 'pill '+st.cls;
+          document.getElementById('trendLabel').textContent = trText;
+
+          // wave mapping to selected's local window
+          const p = (dMax-dMin)>0 ? (v-dMin)/(dMax-dMin) : 0.5;
+          document.getElementById('wave').style.transform = `translateY(${100 - p*100}%)`;
+
+          const readout = document.getElementById('selReadout');
+          readout.style.display='inline-block';
+          readout.textContent = t.toLocaleString([], {hour:'2-digit', minute:'2-digit'})+' • '+v.toFixed(2)+unit;
+        }
+      );
+
+      document.getElementById('snapNow').addEventListener('click',()=>{
+        renderSea(container.parentElement.querySelector('#sea')||container,times,levels,unit,tzAbbr,idxNow,true);
+      });
     }
 
-    // ---------- Sea level / "tide-like" ----------
-    async function fetchSea(lat, lon) {
-      const el = document.getElementById('sea');
-      const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=sea_level_height_msl&timezone=auto`;
-      log('Fetching sea level: ' + url);
-      try {
-        const r = await fetch(url);
-        const data = await r.json();
-        log('Sea API Response:');
-        log(data);
-
-        if (!r.ok || data.error) throw new Error(data.reason || r.statusText);
-
-        const times = (data.hourly?.time || []).map(t => new Date(t));
-        const levels = data.hourly?.sea_level_height_msl || [];
-        if (!times.length || !levels.length) throw new Error('No hourly sea level in response.');
-
-        // index near "now" (local)
-        const now = new Date();
-        let idx = -1;
-        for (let i = 0; i < times.length; i++) {
-          if (times[i] <= now) idx = i; else break;
-        }
-        if (idx < 0) idx = 0;
-
-        const cur = Number(levels[idx]);
-        const unit = (data.hourly_units && data.hourly_units.sea_level_height_msl) || 'm';
-
-        // Window for day min/max (±12h around now)
-        const start = Math.max(0, idx - 12);
-        const end = Math.min(levels.length - 1, idx + 12);
-        const slice = levels.slice(start, end + 1);
-        const min = Math.min(...slice);
-        const max = Math.max(...slice);
-
-        // Normalize to 0..100 within daily range for visuals
-        const pct = (max - min) > 0 ? (cur - min) / (max - min) : 0.5;
-        const status = pctToLabel(pct);
-
-        // Trend over last two hours
-        const prev = levels[Math.max(0, idx - 2)];
-        const trend = cur - prev;
-        const trendText = trend > 0.02 ? 'Rising' : trend < -0.02 ? 'Falling' : 'Steady';
-
-        // Find next/prev local extremes (very light heuristic)
-        const { hi, lo } = findExtremes(levels, idx, 12);
-        const hiTxt = hi ? `High ≈ ${times[hi.i].toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (${hi.v.toFixed(2)}${unit})` : '';
-        const loTxt = lo ? `Low ≈ ${times[lo.i].toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (${lo.v.toFixed(2)}${unit})` : '';
-
-        // Build sparkline for next 48h
-        const sparkSVG = buildSpark(times, levels, idx);
-
-        // Wave height map: daily min->bottom, max->top
-        const waveY = 100 - Math.max(0, Math.min(100, pct * 100));
-
-        el.innerHTML = `
-          <div class="big">${cur.toFixed(2)}${unit}</div>
-          <div class="sub">
-            Sea level vs <b>MSL</b> — 
-            <span class="pill ${status.cls}">${status.label}</span>
-            <span class="pill">${trendText}</span>
-          </div>
-
-          <div class="bar" title="Illustrative wave height mapped to daily min–max">
-            <div class="wave" style="transform: translateY(${waveY}%);"></div>
-          </div>
-
-          <div class="spark" aria-label="48h sea level sparkline">
-            ${sparkSVG}
-          </div>
-
-          <div class="row" style="margin-top:10px">
-            <span class="pill">Now: ${times[idx].toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (${data.timezone_abbreviation || ''})</span>
-            <span class="pill">Day min: ${min.toFixed(2)}${unit}</span>
-            <span class="pill">Day max: ${max.toFixed(2)}${unit}</span>
-          </div>
-
-          <div class="hint" style="margin-top:8px">
-            Est. extremes (heuristic): ${[hiTxt, loTxt].filter(Boolean).join(' • ')}
-          </div>
-        `;
-      } catch (e) {
-        log('Sea fetch ERROR: ' + (e?.message || e));
-        el.innerHTML = `<div class="sub" style="color:#ff8a8a">Could not fetch sea level.</div><div class="hint">${e?.message || e}</div>`;
+    function pctToLabel(p){
+      if(p>=0.84) return {label:'High',cls:'ok'};
+      if(p>=0.66) return {label:'Mid-High',cls:'ok'};
+      if(p>=0.34) return {label:'Mid',cls:''};
+      if(p>=0.16) return {label:'Mid-Low',cls:'warn'};
+      return {label:'Low',cls:'warn'};
+    }
+    function findExtremes(arr,center,win){
+      const s=Math.max(1,center-win), e=Math.min(arr.length-2,center+win);
+      let hi=null,lo=null;
+      for(let i=s;i<=e;i++){
+        if(arr[i]>=arr[i-1]&&arr[i]>=arr[i+1]){ if(!hi||arr[i]>hi.v) hi={i,v:arr[i]}; }
+        if(arr[i]<=arr[i-1]&&arr[i]<=arr[i+1]){ if(!lo||arr[i]<lo.v) lo={i,v:arr[i]}; }
       }
+      return {hi,lo};
     }
 
-    function pctToLabel(p) {
-      if (p >= 0.84) return { label: 'High', cls: 'ok' };
-      if (p >= 0.66) return { label: 'Mid-High', cls: 'ok' };
-      if (p >= 0.34) return { label: 'Mid', cls: '' };
-      if (p >= 0.16) return { label: 'Mid-Low', cls: 'warn' };
-      return { label: 'Low', cls: 'warn' };
-    }
+    // Build an interactive sparkline (tap/drag to scrub)
+    function buildInteractiveSpark(root,times,values,selIdx,onChange){
+      const w=600, h=86, pad=10;
+      const min=Math.min(...values), max=Math.max(...values);
+      const x=i=>pad + (i/(values.length-1))*(w-pad*2);
+      const y=v=>pad + (1-((v-min)/(max-min || 1)))*(h-pad*2);
 
-    function findExtremes(arr, center, winHours) {
-      const start = Math.max(1, center - winHours);
-      const end = Math.min(arr.length - 2, center + winHours);
-      let hi = null, lo = null;
-      for (let i = start; i <= end; i++) {
-        if (arr[i] >= arr[i-1] && arr[i] >= arr[i+1]) {
-          if (!hi || arr[i] > hi.v) hi = { i, v: arr[i] };
-        }
-        if (arr[i] <= arr[i-1] && arr[i] <= arr[i+1]) {
-          if (!lo || arr[i] < lo.v) lo = { i, v: arr[i] };
-        }
-      }
-      return { hi, lo };
-    }
+      // path
+      let d=`M ${x(0)} ${y(values[0])}`;
+      for(let i=1;i<values.length;i++) d+=` L ${x(i)} ${y(values[i])}`;
 
-    function buildSpark(times, values, idxNow) {
-      // Use first 48 points from now (or remaining)
-      const start = Math.max(0, idxNow - 6);
-      const end = Math.min(values.length - 1, idxNow + 48);
-      const arr = values.slice(start, end + 1);
-      const tarr = times.slice(start, end + 1);
-      if (arr.length < 2) return '';
-
-      const w = 600, h = 70, pad = 8;
-      const min = Math.min(...arr), max = Math.max(...arr);
-      const x = (i) => pad + (i / (arr.length - 1)) * (w - pad * 2);
-      const y = (v) => pad + (1 - (v - min) / (max - min || 1)) * (h - pad * 2);
-
-      let d = `M ${x(0)} ${y(arr[0])}`;
-      for (let i = 1; i < arr.length; i++) d += ` L ${x(i)} ${y(arr[i])}`;
-
-      // now line position
-      const nowX = x(idxNow - start);
-
-      return `
-        <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img">
+      // svg
+      root.innerHTML = `
+        <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
           <path d="${d}" fill="none" stroke="rgba(234,242,255,.9)" stroke-width="2"/>
-          <line x1="${nowX}" y1="0" x2="${nowX}" y2="${h}" class="nowline"/>
+          <line id="marker" class="marker" x1="${x(selIdx)}" y1="0" x2="${x(selIdx)}" y2="${h}" />
         </svg>
+        <div class="tooltip" id="tip"></div>
       `;
+
+      const marker = root.querySelector('#marker');
+      const tip = root.querySelector('#tip');
+
+      function setSel(i){
+        i=Math.max(0,Math.min(values.length-1, i));
+        marker.setAttribute('x1',x(i)); marker.setAttribute('x2',x(i));
+        tip.textContent = times[i].toLocaleString([], {hour:'2-digit', minute:'2-digit'})+' • '+Number(values[i]).toFixed(2);
+        onChange?.(i);
+        selIdx=i;
+      }
+      setSel(selIdx);
+
+      function toIndex(evt){
+        const rect=root.getBoundingClientRect();
+        const px=(evt.touches?evt.touches[0].clientX:evt.clientX)-rect.left;
+        const ratio=Math.max(0,Math.min(1,(px-8)/(rect.width-16)));
+        return Math.round(ratio*(values.length-1));
+      }
+      let dragging=false;
+      const start=(e)=>{dragging=true; setSel(toIndex(e)); e.preventDefault();}
+      const move =(e)=>{ if(!dragging) return; setSel(toIndex(e)); e.preventDefault();}
+      const end  =()=>{dragging=false;}
+
+      root.addEventListener('pointerdown',start);
+      root.addEventListener('pointermove',move);
+      root.addEventListener('pointerup',end);
+      root.addEventListener('pointerleave',end);
+
+      // Touch fallback
+      root.addEventListener('touchstart',start,{passive:false});
+      root.addEventListener('touchmove',move,{passive:false});
+      root.addEventListener('touchend',end);
     }
   </script>
 </body>
