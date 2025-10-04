@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Coastal Tracker</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0d1b2a;
+            --card-color: #1b263b;
+            --primary-text: #e0e1dd;
+            --secondary-text: #778da9;
+            --accent-color: #415a77;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 90vw;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            flex: 1;
+            transition: all 0.3s ease;
+        }
+        
+        .card h2 {
+            margin: 0 0 10px 0;
+            color: var(--secondary-text);
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .data-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+
+        .data-subtext {
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        #location-data {
+            font-size: 1rem;
+            color: var(--secondary-text);
+        }
+
+        /* Tide visualization */
+        .tide-visualizer {
+            width: 100%;
+            height: 60px;
+            background-color: var(--accent-color);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .tide-wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23e0e1dd" fill-opacity="0.6" d="M0,192L48,176C96,160,192,128,288,133.3C384,139,480,181,576,186.7C672,192,768,160,864,144C960,128,1056,128,1152,149.3C1248,171,1344,213,1392,234.7L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
+            background-repeat: repeat-x;
+            animation: wave-animation 10s linear infinite;
+            transition: transform 1s ease-out;
+        }
+
+        @keyframes wave-animation {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Media Query for Landscape Orientation */
+        @media (orientation: landscape) and (min-height: 400px) {
+            .container {
+                flex-direction: row;
+                justify-content: center;
+                align-items: stretch;
+            }
+        }
+        
+        /* Loading spinner */
+        .loader {
+            border: 5px solid var(--accent-color);
+            border-top: 5px solid var(--primary-text);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="container">
+        <div class="card" id="location-card">
+            <h2>📍 Location</h2>
+            <div id="location-data">
+                <div class="loader"></div>
+                <p>Requesting location permission...</p>
+            </div>
+        </div>
+
+        <div class="card" id="moon-card">
+            <h2>🌙 Moon Phase</h2>
+            <div id="moon-data">
+                <div class="loader"></div>
+            </div>
+        </div>
+
+        <div class="card" id="tide-card">
+            <h2>🌊 Current Tide</h2>
+            <div id="tide-data">
+                 <div class="loader"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            getLocation();
+        });
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                document.getElementById('location-data').innerHTML = "<p>Geolocation is not supported by this browser.</p>";
+            }
+        }
+
+        function showPosition(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+
+            const locationEl = document.getElementById('location-data');
+            locationEl.innerHTML = `<p>Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}</p>`;
+            
+            fetchMoonPhase(new Date());
+            fetchTideData(lat, lon);
+        }
+
+        function showError(error) {
+            const locationEl = document.getElementById('location-data');
+            let message = "";
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    message = "User denied the request for Geolocation.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = "Location information is unavailable.";
+                    break;
+                case error.TIMEOUT:
+                    message = "The request to get user location timed out.";
+                    break;
+                case error.UNKNOWN_ERROR:
+                    message = "An unknown error occurred.";
+                    break;
+            }
+            locationEl.innerHTML = `<p style="color: #ff8a8a;">${message}</p>`;
+            document.getElementById('moon-data').innerHTML = `<p>Cannot fetch without location.</p>`;
+            document.getElementById('tide-data').innerHTML = `<p>Cannot fetch without location.</p>`;
+        }
+
+        function fetchMoonPhase(date) {
+            const moonInfo = SunCalc.getMoonIllumination(date);
+            const phase = moonInfo.phase;
+            
+            let phaseName = "";
+            let phaseEmoji = "";
+
+            if (phase < 0.03 || phase > 0.97) { phaseName = "New Moon"; phaseEmoji = "🌑"; }
+            else if (phase < 0.22) { phaseName = "Waxing Crescent"; phaseEmoji = "🌒"; }
+            else if (phase < 0.28) { phaseName = "First Quarter"; phaseEmoji = "🌓"; }
+            else if (phase < 0.47) { phaseName = "Waxing Gibbous"; phaseEmoji = "🌔"; }
+            else if (phase < 0.53) { phaseName = "Full Moon"; phaseEmoji = "🌕"; }
+            else if (phase < 0.72) { phaseName = "Waning Gibbous"; phaseEmoji = "🌖"; }
+            else if (phase < 0.78) { phaseName = "Last Quarter"; phaseEmoji = "🌗"; }
+            else { phaseName = "Waning Crescent"; phaseEmoji = "🌘"; }
+
+            const illuminationPercent = (moonInfo.fraction * 100).toFixed(1);
+            
+            const moonEl = document.getElementById('moon-data');
+            moonEl.innerHTML = `
+                <div class="data-display">${phaseEmoji}</div>
+                <div class="data-subtext">${phaseName}</div>
+                <p>${illuminationPercent}% Illuminated</p>
+            `;
+        }
+
+        async function fetchTideData(lat, lon) {
+            const tideEl = document.getElementById('tide-data');
+            // Using Open-Meteo's free Marine API - no key required!
+            const apiUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&current=tide`;
+            
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.statusText}`);
+                }
+                const data = await response.json();
+                
+                // The API provides current data in the `current` object
+                const currentTide = data.current.tide;
+                const tideUnit = data.current_units.tide;
+                
+                // Get tide predictions to determine if rising or falling
+                // We can't easily get this from the 'current' endpoint, so we'll just display the height.
+                // A more advanced version could fetch hourly data.
+                let tideState = "Stable"; // Placeholder
+                
+                tideEl.innerHTML = `
+                    <div class="data-display">${currentTide.toFixed(2)}${tideUnit}</div>
+                    <div class="data-subtext">Above Mean Sea Level</div>
+                    <div class="tide-visualizer">
+                        <div class="tide-wave" style="transform: translateY(${50 - (currentTide * 10)}%);"></div>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error("Failed to fetch tide data:", error);
+                tideEl.innerHTML = `<p style="color: #ff8a8a;">Could not fetch tide data.</p>`;
+            }
+        }
+    </script>
+
+</body>
+</html>
