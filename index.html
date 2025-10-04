@@ -22,25 +22,27 @@
 
         html, body {
             margin: 0;
-            padding: 0;
+            /* Make space for the debug panel at the bottom */
+            padding: 0 0 15vh 0; 
             width: 100%;
-            height: 100%;
+            min-height: 100vh;
             font-family: 'Montserrat', sans-serif;
             background-color: var(--bg-color);
             color: var(--primary-text);
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
+            overflow-x: hidden;
+            box-sizing: border-box;
         }
 
         .container {
             width: 90vw;
-            height: 90vh;
+            max-width: 1200px;
             display: flex;
             flex-direction: column;
             gap: 20px;
-            padding: 20px;
+            padding-top: 20px;
             box-sizing: border-box;
         }
 
@@ -133,6 +135,28 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* --- NEW: Debug Output Styles --- */
+        #debug-output {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 15vh;
+            background-color: rgba(0,0,0,0.8);
+            color: #00ff41; /* Classic terminal green */
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.75rem;
+            padding: 10px;
+            overflow-y: auto;
+            border-top: 2px solid var(--accent-color);
+            z-index: 1000;
+        }
+        #debug-output p {
+            margin: 2px 0;
+            white-space: pre-wrap; /* Allow long lines to wrap */
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
@@ -161,20 +185,48 @@
         </div>
     </main>
 
+    <div id="debug-output">
+        <p><strong>--- DEBUG LOG ---</strong></p>
+    </div>
+
+
     <script>
+        // --- NEW: Helper function to log messages to the screen ---
+        const debugLog = document.getElementById('debug-output');
+        function logToDebug(message) {
+            console.log(message); // Also log to the browser console
+            const p = document.createElement('p');
+            if (typeof message === 'object') {
+                // Pretty print JSON objects for readability
+                p.textContent = `[${new Date().toLocaleTimeString()}] ${JSON.stringify(message, null, 2)}`;
+            } else {
+                p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            }
+            debugLog.appendChild(p);
+            // Auto-scroll to the bottom
+            debugLog.scrollTop = debugLog.scrollHeight;
+        }
+
+
         document.addEventListener('DOMContentLoaded', () => {
+            logToDebug("Page loaded. Initializing tracker...");
             getLocation();
         });
 
         function getLocation() {
+            logToDebug("Attempting to get location...");
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(showPosition, showError);
             } else {
-                document.getElementById('location-data').innerHTML = "<p>Geolocation is not supported by this browser.</p>";
+                const msg = "Geolocation is not supported by this browser.";
+                logToDebug(`ERROR: ${msg}`);
+                document.getElementById('location-data').innerHTML = `<p>${msg}</p>`;
             }
         }
 
         function showPosition(position) {
+            logToDebug("Location success!");
+            logToDebug(position.coords); // Log the full coords object
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
 
@@ -186,6 +238,8 @@
         }
 
         function showError(error) {
+            logToDebug("Location ERROR!");
+            logToDebug(error); // Log the full error object
             const locationEl = document.getElementById('location-data');
             let message = "";
             switch(error.code) {
@@ -208,7 +262,9 @@
         }
 
         function fetchMoonPhase(date) {
+            logToDebug("Fetching moon phase...");
             const moonInfo = SunCalc.getMoonIllumination(date);
+            logToDebug({moonInfo}); // Log moon data object
             const phase = moonInfo.phase;
             
             let phaseName = "";
@@ -235,36 +291,41 @@
 
         async function fetchTideData(lat, lon) {
             const tideEl = document.getElementById('tide-data');
-            // Using Open-Meteo's free Marine API - no key required!
             const apiUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&current=tide`;
+            logToDebug(`Fetching tide data from URL: ${apiUrl}`);
             
             try {
                 const response = await fetch(apiUrl);
-                if (!response.ok) {
-                    throw new Error(`API error: ${response.statusText}`);
-                }
                 const data = await response.json();
                 
-                // The API provides current data in the `current` object
-                const currentTide = data.current.tide;
-                const tideUnit = data.current_units.tide;
+                logToDebug("Tide API Response:");
+                logToDebug(data); // THIS IS THE MOST IMPORTANT LOG
+
+                if (!response.ok || data.error) {
+                    throw new Error(data.reason || `API error: ${response.statusText}`);
+                }
+
+                // Check if 'current' and 'tide' properties exist
+                if (data && data.current && typeof data.current.tide === 'number') {
+                    const currentTide = data.current.tide;
+                    const tideUnit = data.current_units.tide;
                 
-                // Get tide predictions to determine if rising or falling
-                // We can't easily get this from the 'current' endpoint, so we'll just display the height.
-                // A more advanced version could fetch hourly data.
-                let tideState = "Stable"; // Placeholder
-                
-                tideEl.innerHTML = `
-                    <div class="data-display">${currentTide.toFixed(2)}${tideUnit}</div>
-                    <div class="data-subtext">Above Mean Sea Level</div>
-                    <div class="tide-visualizer">
-                        <div class="tide-wave" style="transform: translateY(${50 - (currentTide * 10)}%);"></div>
-                    </div>
-                `;
+                    tideEl.innerHTML = `
+                        <div class="data-display">${currentTide.toFixed(2)}${tideUnit}</div>
+                        <div class="data-subtext">Above Mean Sea Level</div>
+                        <div class="tide-visualizer">
+                            <div class="tide-wave" style="transform: translateY(${50 - (currentTide * 10)}%);"></div>
+                        </div>
+                    `;
+                } else {
+                    // Handle cases where the API returns a success, but no tide data for the location
+                    throw new Error("Tide data not available for this location in the API response.");
+                }
 
             } catch (error) {
+                logToDebug(`Tide fetch ERROR: ${error.message}`);
                 console.error("Failed to fetch tide data:", error);
-                tideEl.innerHTML = `<p style="color: #ff8a8a;">Could not fetch tide data.</p>`;
+                tideEl.innerHTML = `<p style="color: #ff8a8a;">Could not fetch tide data.</p><p style="font-size: 0.8rem; color: var(--secondary-text)">${error.message}</p>`;
             }
         }
     </script>
