@@ -18,6 +18,8 @@
             --primary-text: #e0e1dd;
             --secondary-text: #778da9;
             --accent-color: #415a77;
+            --ok: #5bd38c;
+            --warn: #ffcc66;
         }
 
         html, body {
@@ -93,21 +95,24 @@
             margin-top: 15px;
         }
 
+        /* Seamless-er wave: animate background-position on a tiling svg */
         .tide-wave {
             position: absolute;
             bottom: 0;
             left: 0;
-            width: 200%;
-            height: 100%;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23e0e1dd" fill-opacity="0.6" d="M0,192L48,176C96,160,192,128,288,133.3C384,139,480,181,576,186.7C672,192,768,160,864,144C960,128,1056,128,1152,149.3C1248,171,1344,213,1392,234.7L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
+            right: 0;
+            top: 0;
+            /* Subtle, loop-friendly wave (left/right edges align) */
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 120 20"><path fill="%23e0e1dd" fill-opacity="0.6" d="M0,10 C10,5 20,15 30,10 C40,5 50,15 60,10 C70,5 80,15 90,10 C100,5 110,15 120,10 L120,20 L0,20 Z"/></svg>');
             background-repeat: repeat-x;
-            animation: wave-animation 10s linear infinite;
-            transition: transform 1s ease-out;
+            background-size: 240px 100%; /* sets a fixed tile width for smooth scrolling */
+            animation: wave-scroll 8s linear infinite;
+            will-change: background-position, transform;
+            transition: transform 0.8s ease-out;
         }
-
-        @keyframes wave-animation {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
+        @keyframes wave-scroll {
+            from { background-position: 0 0; }
+            to   { background-position: -240px 0; }
         }
 
         @media (orientation: landscape) and (min-height: 400px) {
@@ -166,6 +171,22 @@
             font-weight: 700;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
+
+        .hint {
+            font-size: 0.85rem;
+            color: var(--secondary-text);
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            background: rgba(255,255,255,0.1);
+            margin: 0 4px;
+        }
     </style>
 </head>
 <body>
@@ -187,10 +208,14 @@
         </div>
 
         <div class="card" id="tide-card">
-            <h2>🌊 Current Tide</h2>
+            <h2>🌊 Sea Level (MSL)</h2>
             <div id="tide-data">
                  <div class="loader"></div>
             </div>
+            <p class="hint">
+                This is <strong>sea level vs Mean Sea Level (MSL)</strong>, not chart datum (LAT). 
+                For navigation, use official tide tables.
+            </p>
         </div>
     </main>
 
@@ -314,7 +339,6 @@
          */
         async function fetchTideData(lat, lon) {
             const tideEl = document.getElementById('tide-data');
-            // Use hourly sea level vs mean sea level; timezone=auto returns local timestamps
             const apiUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=sea_level_height_msl&timezone=auto`;
             
             logToDebug(`Fetching tide data from URL: ${apiUrl}`);
@@ -337,38 +361,66 @@
 
                     const now = new Date();
 
-                    // Find the index of the hour that is <= now (local) and closest.
+                    // Find index at/just before now
                     let idx = -1;
                     for (let i = 0; i < times.length; i++) {
                         if (times[i].getTime() <= now.getTime()) idx = i; else break;
                     }
                     if (idx === -1) {
-                        // Fallback: choose the nearest hour by absolute difference
+                        // Fallback: nearest by absolute difference
                         let minDiff = Infinity;
                         for (let i = 0; i < times.length; i++) {
                             const d = Math.abs(times[i].getTime() - now.getTime());
                             if (d < minDiff) { minDiff = d; idx = i; }
                         }
                     }
-
                     if (idx === -1) throw new Error("Could not match current time to hourly sea level.");
 
                     const currentLevel = levels[idx];
-                    
-                    // Map sea level (m) to a simple visualization height.
-                    // Clamp from -1.5m..+1.5m -> 0%..100% (purely illustrative)
+
+                    // Simple hi/lo estimator: find local max/min within +/- 6 hours
+                    function findLocalExtreme(center, window = 6) {
+                        const start = Math.max(1, center - window);
+                        const end = Math.min(levels.length - 2, center + window);
+                        let hi = {i: center, v: levels[center]};
+                        let lo = {i: center, v: levels[center]};
+                        for (let i = start; i <= end; i++) {
+                            // local max
+                            if (levels[i] >= levels[i-1] && levels[i] >= levels[i+1] && levels[i] > hi.v) {
+                                hi = {i, v: levels[i]};
+                            }
+                            // local min
+                            if (levels[i] <= levels[i-1] && levels[i] <= levels[i+1] && levels[i] < lo.v) {
+                                lo = {i, v: levels[i]};
+                            }
+                        }
+                        return {hi, lo};
+                    }
+                    const {hi, lo} = findLocalExtreme(idx, 6);
+
+                    // Map sea level (m) to visualization height.
+                    // Clamp from -1.5m..+1.5m -> 0%..100% (illustrative only)
                     const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
                     const pct = ((clamp(currentLevel, -1.5, 1.5) + 1.5) / 3.0) * 100;
                     const translateY = 100 - pct; // water rises with higher level
 
+                    const trend = (levels[idx] - (levels[idx-1] ?? levels[idx])) || 0;
+                    const trendText = trend > 0 ? "Rising" : trend < 0 ? "Falling" : "Steady";
+
                     tideEl.innerHTML = `
                         <div class="data-display">${Number(currentLevel).toFixed(2)}${unit}</div>
-                        <div class="data-subtext">Sea Level vs MSL (illustrative)</div>
-                        <div class="tide-visualizer">
+                        <div class="data-subtext">Sea Level vs MSL — <span class="pill">${trendText}</span></div>
+                        <div class="tide-visualizer" title="Illustrative wave height mapped from sea level vs MSL">
                             <div class="tide-wave" style="transform: translateY(${translateY}%);"></div>
                         </div>
-                        <p class="data-subtext" style="margin-top:8px;color:var(--secondary-text)">
-                            Timestamp: ${times[idx].toLocaleString()}
+                        <p class="hint">
+                            Timestamp: ${times[idx].toLocaleString()} • Timezone: ${data.timezone_abbreviation}
+                        </p>
+                        <p class="hint">
+                            Est. next/prev extremes (heuristic):
+                            ${hi.i !== idx ? `High ≈ ${times[hi.i].toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (${hi.v.toFixed(2)}${unit})` : ''}
+                            ${hi.i !== idx && lo.i !== idx ? ' • ' : ''}
+                            ${lo.i !== idx ? `Low ≈ ${times[lo.i].toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (${lo.v.toFixed(2)}${unit})` : ''}
                         </p>
                     `;
                 } else {
@@ -378,10 +430,10 @@
             } catch (error) {
                 logToDebug(`Tide fetch ERROR: ${error.message}`);
                 console.error("Failed to fetch tide data:", error);
-                tideEl.innerHTML = `<p style="color: #ff8a8a;">Could not fetch tide data.</p><p style="font-size: 0.8rem; color: var(--secondary-text)">${error.message}</p>`;
+                tideEl.innerHTML = `<p style="color: #ff8a8a;">Could not fetch sea level.</p><p class="hint">${error.message}</p>`;
             }
         }
     </script>
 
 </body>
-</html>.
+</html>
