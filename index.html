@@ -1,439 +1,472 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Coastal Tracker</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, user-scalable=no"
+  />
+  <title>Coastal Tracker</title>
 
-    <style>
-        :root {
-            --bg-color: #0d1b2a;
-            --card-color: #1b263b;
-            --primary-text: #e0e1dd;
-            --secondary-text: #778da9;
-            --accent-color: #415a77;
-            --ok: #5bd38c;
-            --warn: #ffcc66;
-        }
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
 
-        html, body {
-            margin: 0;
-            padding: 0 0 15vh 0; 
-            width: 100%;
-            min-height: 100vh;
-            font-family: 'Montserrat', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--primary-text);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow-x: hidden;
-            box-sizing: border-box;
-        }
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #111a2c;
+      --text: #e8ebf1;
+      --muted: #9fb0c9;
+      --accent: #2a77ff;
+      --accent-2: #1b335c;
+      --good: #43d17d;
+      --warn: #ffcc66;
+      --bad: #ff6b6b;
+      --chip: rgba(255, 255, 255, 0.08);
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
+    }
 
-        .container {
-            width: 90vw;
-            max-width: 1200px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding-top: 20px;
-            box-sizing: border-box;
-        }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: radial-gradient(1200px 700px at 50% -200px, #102140, var(--bg));
+      color: var(--text);
+      font-family: 'Montserrat', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
 
-        .card {
-            background-color: var(--card-color);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            flex: 1;
-            transition: all 0.3s ease;
-        }
-        
-        .card h2 {
-            margin: 0 0 10px 0;
-            color: var(--secondary-text);
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-        }
+    .wrap {
+      width: min(1100px, 92vw);
+      margin: 22px auto calc(15vh + 22px);
+      display: grid;
+      gap: 18px;
+      grid-template-columns: 1fr;
+    }
 
-        .data-display {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin: 5px 0;
-        }
+    .title {
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: .6px;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: .9rem;
+    }
 
-        .data-subtext {
-            font-size: 1rem;
-            font-weight: 300;
-        }
+    .cards {
+      display: grid;
+      gap: 18px;
+    }
+    @media (min-width: 900px) {
+      .cards { grid-template-columns: 1fr 1fr 1fr; }
+    }
 
-        #location-data {
-            font-size: 1rem;
-            color: var(--secondary-text);
-        }
+    .card {
+      background: linear-gradient(180deg, var(--card), #0f1726);
+      border-radius: var(--radius);
+      padding: 18px 18px 20px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
 
-        .tide-visualizer {
-            width: 100%;
-            height: 60px;
-            background-color: var(--accent-color);
-            border-radius: 10px;
-            position: relative;
-            overflow: hidden;
-            margin-top: 15px;
-        }
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2 .emoji { font-size: 1.1rem; }
 
-        /* Seamless-er wave: animate background-position on a tiling svg */
-        .tide-wave {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            top: 0;
-            /* Subtle, loop-friendly wave (left/right edges align) */
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 120 20"><path fill="%23e0e1dd" fill-opacity="0.6" d="M0,10 C10,5 20,15 30,10 C40,5 50,15 60,10 C70,5 80,15 90,10 C100,5 110,15 120,10 L120,20 L0,20 Z"/></svg>');
-            background-repeat: repeat-x;
-            background-size: 240px 100%; /* sets a fixed tile width for smooth scrolling */
-            animation: wave-scroll 8s linear infinite;
-            will-change: background-position, transform;
-            transition: transform 0.8s ease-out;
-        }
-        @keyframes wave-scroll {
-            from { background-position: 0 0; }
-            to   { background-position: -240px 0; }
-        }
+    .big {
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: .5px;
+      margin: 2px 0 6px;
+    }
 
-        @media (orientation: landscape) and (min-height: 400px) {
-            .container {
-                flex-direction: row;
-                justify-content: center;
-                align-items: stretch;
-            }
-        }
-        
-        .loader {
-            border: 5px solid var(--accent-color);
-            border-top: 5px solid var(--primary-text);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
+    .sub {
+      color: var(--muted);
+      font-weight: 300;
+      font-size: 0.98rem;
+    }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 12px;
+      margin-top: 8px;
+    }
 
-        #debug-output {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 15vh;
-            background-color: rgba(0,0,0,0.8);
-            color: #00ff41;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.75rem;
-            padding: 10px 84px 10px 10px; /* space for the button */
-            overflow-y: auto;
-            border-top: 2px solid var(--accent-color);
-            z-index: 1000;
-        }
-        #debug-output p {
-            margin: 2px 0;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
+    .pill {
+      background: var(--chip);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .pill.ok { background: rgba(67,209,125,.12); border-color: rgba(67,209,125,.25); }
+    .pill.warn { background: rgba(255,204,102,.12); border-color: rgba(255,204,102,.25); }
+    .pill.bad { background: rgba(255,107,107,.12); border-color: rgba(255,107,107,.25); }
 
-        #copy-logs-btn {
-            position: fixed;
-            right: 10px;
-            bottom: calc(15vh + 10px);
-            z-index: 1100;
-            background: var(--primary-text);
-            color: #0d1b2a;
-            border: none;
-            border-radius: 10px;
-            padding: 10px 14px;
-            font-weight: 700;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
+    /* Wave bar */
+    .bar {
+      margin-top: 14px;
+      height: 70px;
+      background: linear-gradient(180deg, #2a3e63, #283c5f);
+      border-radius: 14px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .wave {
+      position: absolute;
+      inset: 0;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 240 40"><path fill="%23eaf2ff" fill-opacity="0.6" d="M0,22 C20,10 40,34 60,22 C80,10 100,34 120,22 C140,10 160,34 180,22 C200,10 220,34 240,22 L240,40 L0,40 Z"/></svg>');
+      background-repeat: repeat-x;
+      background-size: 240px 100%;
+      animation: wave 8s linear infinite;
+      will-change: background-position, transform;
+      transform: translateY(60%); /* will be overridden */
+      transition: transform .9s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes wave {
+      from { background-position: 0 0; }
+      to   { background-position: -240px 0; }
+    }
 
-        .hint {
-            font-size: 0.85rem;
-            color: var(--secondary-text);
-            margin-top: 8px;
-            line-height: 1.4;
-        }
+    /* Sparkline */
+    .spark {
+      width: 100%;
+      height: 70px;
+      margin-top: 14px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #112142, #0f1a34);
+      border: 1px solid rgba(255,255,255,.06);
+      display: grid;
+      place-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .spark svg { width: 100%; height: 70px; display: block; }
+    .nowline {
+      stroke: rgba(255,255,255,.45);
+      stroke-dasharray: 4 4;
+    }
 
-        .pill {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            background: rgba(255,255,255,0.1);
-            margin: 0 4px;
-        }
-    </style>
+    .loader {
+      border: 5px solid #213154;
+      border-top: 5px solid #eaf2ff;
+      border-radius: 50%;
+      width: 42px; height: 42px;
+      animation: spin 1s linear infinite;
+      margin: 12px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hint {
+      color: var(--muted);
+      font-size: .85rem;
+      margin-top: 10px;
+      line-height: 1.45;
+    }
+
+    /* Debug dock */
+    #debug {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: 15vh;
+      background: rgba(0,0,0,.84);
+      border-top: 1px solid rgba(255,255,255,.1);
+      color: #9efc8d;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: .78rem;
+      padding: 10px 88px 10px 12px;
+      overflow: auto;
+      z-index: 1000;
+    }
+    #debug p { margin: 2px 0; white-space: pre-wrap; word-break: break-word; }
+    #copy {
+      position: fixed;
+      right: 10px;
+      bottom: calc(15vh + 10px);
+      z-index: 1100;
+      background: #eaf2ff;
+      color: #0b1220;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 800;
+      box-shadow: var(--shadow);
+    }
+  </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="title">Coastal Tracker</div>
 
-    <main class="container">
-        <div class="card" id="location-card">
-            <h2>📍 Location</h2>
-            <div id="location-data">
-                <div class="loader"></div>
-                <p>Requesting location permission...</p>
-            </div>
+    <div class="cards">
+      <!-- Location -->
+      <section class="card">
+        <h2><span class="emoji">📍</span> Location</h2>
+        <div id="loc">
+          <div class="loader"></div>
+          <div class="sub">Requesting location permission…</div>
         </div>
+      </section>
 
-        <div class="card" id="moon-card">
-            <h2>🌙 Moon Phase</h2>
-            <div id="moon-data">
-                <div class="loader"></div>
-            </div>
+      <!-- Moon -->
+      <section class="card">
+        <h2><span class="emoji">🌙</span> Moon</h2>
+        <div id="moon">
+          <div class="loader"></div>
         </div>
+      </section>
 
-        <div class="card" id="tide-card">
-            <h2>🌊 Sea Level (MSL)</h2>
-            <div id="tide-data">
-                 <div class="loader"></div>
-            </div>
-            <p class="hint">
-                This is <strong>sea level vs Mean Sea Level (MSL)</strong>, not chart datum (LAT). 
-                For navigation, use official tide tables.
-            </p>
+      <!-- Sea Level -->
+      <section class="card">
+        <h2><span class="emoji">🌊</span> Sea Level (MSL)</h2>
+        <div id="sea">
+          <div class="loader"></div>
         </div>
-    </main>
-
-    <!-- Copy logs button -->
-    <button id="copy-logs-btn" aria-label="Copy debug logs">Copy logs</button>
-
-    <div id="debug-output">
-        <p><strong>--- DEBUG LOG ---</strong></p>
+        <div class="hint">
+          Values are <b>sea level vs Mean Sea Level (MSL)</b>, not chart datum (LAT).  
+          For navigation, use official tide tables.
+        </div>
+      </section>
     </div>
+  </div>
 
-    <script>
-        const debugLog = document.getElementById('debug-output');
-        function logToDebug(message) {
-            console.log(message);
-            const p = document.createElement('p');
-            if (typeof message === 'object') {
-                p.textContent = `[${new Date().toLocaleTimeString()}] ${JSON.stringify(message, null, 2)}`;
-            } else {
-                p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-            }
-            debugLog.appendChild(p);
-            debugLog.scrollTop = debugLog.scrollHeight;
+  <button id="copy" aria-label="Copy debug logs">Copy logs</button>
+  <div id="debug"><p><strong>--- DEBUG LOG ---</strong></p></div>
+
+  <script>
+    // ---------- Debug ----------
+    const debug = document.getElementById('debug');
+    function log(msg) {
+      console.log(msg);
+      const p = document.createElement('p');
+      p.textContent = `[${new Date().toLocaleTimeString()}] ` + (typeof msg === 'object' ? JSON.stringify(msg, null, 2) : msg);
+      debug.appendChild(p);
+      debug.scrollTop = debug.scrollHeight;
+    }
+    document.getElementById('copy').addEventListener('click', async () => {
+      const text = debug.innerText || '';
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
         }
+        log('✅ Logs copied to clipboard.');
+      } catch (e) { log('❌ Copy failed: ' + (e?.message || e)); }
+    });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            logToDebug("Page loaded. Initializing tracker...");
-            wireCopyLogs();
-            getLocation();
-        });
+    // ---------- App ----------
+    document.addEventListener('DOMContentLoaded', () => {
+      log('Page loaded. Initializing…');
+      if (!navigator.geolocation) {
+        document.getElementById('loc').innerHTML = '<div class="sub" style="color:#ff8a8a">Geolocation not supported.</div>';
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(onPos, onPosErr);
+    });
 
-        function wireCopyLogs() {
-            const btn = document.getElementById('copy-logs-btn');
-            btn.addEventListener('click', async () => {
-                const text = debugLog.innerText || '';
-                try {
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                        await navigator.clipboard.writeText(text);
-                        logToDebug("✅ Logs copied to clipboard.");
-                    } else {
-                        // Fallback for older browsers
-                        const ta = document.createElement('textarea');
-                        ta.value = text;
-                        document.body.appendChild(ta);
-                        ta.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(ta);
-                        logToDebug("✅ Logs copied (fallback).");
-                    }
-                } catch (e) {
-                    logToDebug("❌ Failed to copy logs: " + (e && e.message ? e.message : e));
-                }
-            });
+    function onPosErr(err) {
+      log('Location ERROR');
+      log(err);
+      document.getElementById('loc').innerHTML = `<div class="sub" style="color:#ff8a8a">${err.message}</div>`;
+      document.getElementById('moon').innerHTML = `<div class="sub">Cannot fetch without location.</div>`;
+      document.getElementById('sea').innerHTML = `<div class="sub">Cannot fetch without location.</div>`;
+    }
+
+    function onPos(pos) {
+      log('Location success');
+      log(pos.coords);
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      document.getElementById('loc').innerHTML = `
+        <div class="row">
+          <div class="pill">Lat ${lat.toFixed(4)}</div>
+          <div class="pill">Lon ${lon.toFixed(4)}</div>
+          ${typeof pos.coords.accuracy === 'number' ? `<div class="pill">±${Math.round(pos.coords.accuracy)} m</div>` : ''}
+        </div>
+      `;
+      renderMoon(new Date());
+      fetchSea(lat, lon);
+    }
+
+    // ---------- Moon ----------
+    function renderMoon(date) {
+      log('Fetching moon phase…');
+      const m = SunCalc.getMoonIllumination(date);
+      log({ moonInfo: m });
+      const phase = m.phase;
+      let name = '', emoji = '';
+      if (phase < 0.03 || phase > 0.97) { name = 'New Moon'; emoji = '🌑'; }
+      else if (phase < 0.22) { name = 'Waxing Crescent'; emoji = '🌒'; }
+      else if (phase < 0.28) { name = 'First Quarter'; emoji = '🌓'; }
+      else if (phase < 0.47) { name = 'Waxing Gibbous'; emoji = '🌔'; }
+      else if (phase < 0.53) { name = 'Full Moon'; emoji = '🌕'; }
+      else if (phase < 0.72) { name = 'Waning Gibbous'; emoji = '🌖'; }
+      else if (phase < 0.78) { name = 'Last Quarter'; emoji = '🌗'; }
+      else { name = 'Waning Crescent'; emoji = '🌘'; }
+      const pct = (m.fraction * 100).toFixed(1);
+      document.getElementById('moon').innerHTML = `
+        <div class="big">${emoji}</div>
+        <div class="sub" style="font-weight:700">${name}</div>
+        <div class="sub">${pct}% Illuminated</div>
+      `;
+    }
+
+    // ---------- Sea level / "tide-like" ----------
+    async function fetchSea(lat, lon) {
+      const el = document.getElementById('sea');
+      const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=sea_level_height_msl&timezone=auto`;
+      log('Fetching sea level: ' + url);
+      try {
+        const r = await fetch(url);
+        const data = await r.json();
+        log('Sea API Response:');
+        log(data);
+
+        if (!r.ok || data.error) throw new Error(data.reason || r.statusText);
+
+        const times = (data.hourly?.time || []).map(t => new Date(t));
+        const levels = data.hourly?.sea_level_height_msl || [];
+        if (!times.length || !levels.length) throw new Error('No hourly sea level in response.');
+
+        // index near "now" (local)
+        const now = new Date();
+        let idx = -1;
+        for (let i = 0; i < times.length; i++) {
+          if (times[i] <= now) idx = i; else break;
         }
+        if (idx < 0) idx = 0;
 
-        function getLocation() {
-            logToDebug("Attempting to get location...");
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition, showError);
-            } else {
-                const msg = "Geolocation is not supported by this browser.";
-                logToDebug(`ERROR: ${msg}`);
-                document.getElementById('location-data').innerHTML = `<p>${msg}</p>`;
-            }
+        const cur = Number(levels[idx]);
+        const unit = (data.hourly_units && data.hourly_units.sea_level_height_msl) || 'm';
+
+        // Window for day min/max (±12h around now)
+        const start = Math.max(0, idx - 12);
+        const end = Math.min(levels.length - 1, idx + 12);
+        const slice = levels.slice(start, end + 1);
+        const min = Math.min(...slice);
+        const max = Math.max(...slice);
+
+        // Normalize to 0..100 within daily range for visuals
+        const pct = (max - min) > 0 ? (cur - min) / (max - min) : 0.5;
+        const status = pctToLabel(pct);
+
+        // Trend over last two hours
+        const prev = levels[Math.max(0, idx - 2)];
+        const trend = cur - prev;
+        const trendText = trend > 0.02 ? 'Rising' : trend < -0.02 ? 'Falling' : 'Steady';
+
+        // Find next/prev local extremes (very light heuristic)
+        const { hi, lo } = findExtremes(levels, idx, 12);
+        const hiTxt = hi ? `High ≈ ${times[hi.i].toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (${hi.v.toFixed(2)}${unit})` : '';
+        const loTxt = lo ? `Low ≈ ${times[lo.i].toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (${lo.v.toFixed(2)}${unit})` : '';
+
+        // Build sparkline for next 48h
+        const sparkSVG = buildSpark(times, levels, idx);
+
+        // Wave height map: daily min->bottom, max->top
+        const waveY = 100 - Math.max(0, Math.min(100, pct * 100));
+
+        el.innerHTML = `
+          <div class="big">${cur.toFixed(2)}${unit}</div>
+          <div class="sub">
+            Sea level vs <b>MSL</b> — 
+            <span class="pill ${status.cls}">${status.label}</span>
+            <span class="pill">${trendText}</span>
+          </div>
+
+          <div class="bar" title="Illustrative wave height mapped to daily min–max">
+            <div class="wave" style="transform: translateY(${waveY}%);"></div>
+          </div>
+
+          <div class="spark" aria-label="48h sea level sparkline">
+            ${sparkSVG}
+          </div>
+
+          <div class="row" style="margin-top:10px">
+            <span class="pill">Now: ${times[idx].toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (${data.timezone_abbreviation || ''})</span>
+            <span class="pill">Day min: ${min.toFixed(2)}${unit}</span>
+            <span class="pill">Day max: ${max.toFixed(2)}${unit}</span>
+          </div>
+
+          <div class="hint" style="margin-top:8px">
+            Est. extremes (heuristic): ${[hiTxt, loTxt].filter(Boolean).join(' • ')}
+          </div>
+        `;
+      } catch (e) {
+        log('Sea fetch ERROR: ' + (e?.message || e));
+        el.innerHTML = `<div class="sub" style="color:#ff8a8a">Could not fetch sea level.</div><div class="hint">${e?.message || e}</div>`;
+      }
+    }
+
+    function pctToLabel(p) {
+      if (p >= 0.84) return { label: 'High', cls: 'ok' };
+      if (p >= 0.66) return { label: 'Mid-High', cls: 'ok' };
+      if (p >= 0.34) return { label: 'Mid', cls: '' };
+      if (p >= 0.16) return { label: 'Mid-Low', cls: 'warn' };
+      return { label: 'Low', cls: 'warn' };
+    }
+
+    function findExtremes(arr, center, winHours) {
+      const start = Math.max(1, center - winHours);
+      const end = Math.min(arr.length - 2, center + winHours);
+      let hi = null, lo = null;
+      for (let i = start; i <= end; i++) {
+        if (arr[i] >= arr[i-1] && arr[i] >= arr[i+1]) {
+          if (!hi || arr[i] > hi.v) hi = { i, v: arr[i] };
         }
-
-        function showPosition(position) {
-            logToDebug("Location success!");
-            logToDebug(position.coords);
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-
-            const locationEl = document.getElementById('location-data');
-            locationEl.innerHTML = `<p>Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}</p>`;
-            
-            fetchMoonPhase(new Date());
-            fetchTideData(lat, lon);
+        if (arr[i] <= arr[i-1] && arr[i] <= arr[i+1]) {
+          if (!lo || arr[i] < lo.v) lo = { i, v: arr[i] };
         }
+      }
+      return { hi, lo };
+    }
 
-        function showError(error) {
-            logToDebug("Location ERROR!");
-            logToDebug(error);
-            const locationEl = document.getElementById('location-data');
-            let message = "";
-            switch(error.code) {
-                case error.PERMISSION_DENIED: message = "User denied the request for Geolocation."; break;
-                case error.POSITION_UNAVAILABLE: message = "Location information is unavailable."; break;
-                case error.TIMEOUT: message = "The request to get user location timed out."; break;
-                case error.UNKNOWN_ERROR: message = "An unknown error occurred."; break;
-            }
-            locationEl.innerHTML = `<p style="color: #ff8a8a;">${message}</p>`;
-            document.getElementById('moon-data').innerHTML = `<p>Cannot fetch without location.</p>`;
-            document.getElementById('tide-data').innerHTML = `<p>Cannot fetch without location.</p>`;
-        }
+    function buildSpark(times, values, idxNow) {
+      // Use first 48 points from now (or remaining)
+      const start = Math.max(0, idxNow - 6);
+      const end = Math.min(values.length - 1, idxNow + 48);
+      const arr = values.slice(start, end + 1);
+      const tarr = times.slice(start, end + 1);
+      if (arr.length < 2) return '';
 
-        function fetchMoonPhase(date) {
-            logToDebug("Fetching moon phase...");
-            const moonInfo = SunCalc.getMoonIllumination(date);
-            logToDebug({moonInfo});
-            const phase = moonInfo.phase;
-            
-            let phaseName = "", phaseEmoji = "";
-            if (phase < 0.03 || phase > 0.97) { phaseName = "New Moon"; phaseEmoji = "🌑"; }
-            else if (phase < 0.22) { phaseName = "Waxing Crescent"; phaseEmoji = "🌒"; }
-            else if (phase < 0.28) { phaseName = "First Quarter"; phaseEmoji = "🌓"; }
-            else if (phase < 0.47) { phaseName = "Waxing Gibbous"; phaseEmoji = "🌔"; }
-            else if (phase < 0.53) { phaseName = "Full Moon"; phaseEmoji = "🌕"; }
-            else if (phase < 0.72) { phaseName = "Waning Gibbous"; phaseEmoji = "🌖"; }
-            else if (phase < 0.78) { phaseName = "Last Quarter"; phaseEmoji = "🌗"; }
-            else { phaseName = "Waning Crescent"; phaseEmoji = "🌘"; }
+      const w = 600, h = 70, pad = 8;
+      const min = Math.min(...arr), max = Math.max(...arr);
+      const x = (i) => pad + (i / (arr.length - 1)) * (w - pad * 2);
+      const y = (v) => pad + (1 - (v - min) / (max - min || 1)) * (h - pad * 2);
 
-            const illuminationPercent = (moonInfo.fraction * 100).toFixed(1);
-            
-            const moonEl = document.getElementById('moon-data');
-            moonEl.innerHTML = `<div class="data-display">${phaseEmoji}</div><div class="data-subtext">${phaseName}</div><p>${illuminationPercent}% Illuminated</p>`;
-        }
+      let d = `M ${x(0)} ${y(arr[0])}`;
+      for (let i = 1; i < arr.length; i++) d += ` L ${x(i)} ${y(arr[i])}`;
 
-        /**
-         * Fetch sea level (tide-like) data.
-         * Open-Meteo Marine API variable: sea_level_height_msl (metres).
-         * Note: Accuracy can be limited near complex coastlines and unreliable inland.
-         */
-        async function fetchTideData(lat, lon) {
-            const tideEl = document.getElementById('tide-data');
-            const apiUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=sea_level_height_msl&timezone=auto`;
-            
-            logToDebug(`Fetching tide data from URL: ${apiUrl}`);
-            
-            try {
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-                
-                logToDebug("Tide API Response:");
-                logToDebug(data);
+      // now line position
+      const nowX = x(idxNow - start);
 
-                if (!response.ok || data.error) {
-                    throw new Error(data.reason || `API error: ${response.statusText}`);
-                }
-
-                if (data && data.hourly && data.hourly.time && data.hourly.sea_level_height_msl) {
-                    const times = data.hourly.time.map(t => new Date(t));
-                    const levels = data.hourly.sea_level_height_msl;
-                    const unit = data.hourly_units && (data.hourly_units.sea_level_height_msl || "m");
-
-                    const now = new Date();
-
-                    // Find index at/just before now
-                    let idx = -1;
-                    for (let i = 0; i < times.length; i++) {
-                        if (times[i].getTime() <= now.getTime()) idx = i; else break;
-                    }
-                    if (idx === -1) {
-                        // Fallback: nearest by absolute difference
-                        let minDiff = Infinity;
-                        for (let i = 0; i < times.length; i++) {
-                            const d = Math.abs(times[i].getTime() - now.getTime());
-                            if (d < minDiff) { minDiff = d; idx = i; }
-                        }
-                    }
-                    if (idx === -1) throw new Error("Could not match current time to hourly sea level.");
-
-                    const currentLevel = levels[idx];
-
-                    // Simple hi/lo estimator: find local max/min within +/- 6 hours
-                    function findLocalExtreme(center, window = 6) {
-                        const start = Math.max(1, center - window);
-                        const end = Math.min(levels.length - 2, center + window);
-                        let hi = {i: center, v: levels[center]};
-                        let lo = {i: center, v: levels[center]};
-                        for (let i = start; i <= end; i++) {
-                            // local max
-                            if (levels[i] >= levels[i-1] && levels[i] >= levels[i+1] && levels[i] > hi.v) {
-                                hi = {i, v: levels[i]};
-                            }
-                            // local min
-                            if (levels[i] <= levels[i-1] && levels[i] <= levels[i+1] && levels[i] < lo.v) {
-                                lo = {i, v: levels[i]};
-                            }
-                        }
-                        return {hi, lo};
-                    }
-                    const {hi, lo} = findLocalExtreme(idx, 6);
-
-                    // Map sea level (m) to visualization height.
-                    // Clamp from -1.5m..+1.5m -> 0%..100% (illustrative only)
-                    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-                    const pct = ((clamp(currentLevel, -1.5, 1.5) + 1.5) / 3.0) * 100;
-                    const translateY = 100 - pct; // water rises with higher level
-
-                    const trend = (levels[idx] - (levels[idx-1] ?? levels[idx])) || 0;
-                    const trendText = trend > 0 ? "Rising" : trend < 0 ? "Falling" : "Steady";
-
-                    tideEl.innerHTML = `
-                        <div class="data-display">${Number(currentLevel).toFixed(2)}${unit}</div>
-                        <div class="data-subtext">Sea Level vs MSL — <span class="pill">${trendText}</span></div>
-                        <div class="tide-visualizer" title="Illustrative wave height mapped from sea level vs MSL">
-                            <div class="tide-wave" style="transform: translateY(${translateY}%);"></div>
-                        </div>
-                        <p class="hint">
-                            Timestamp: ${times[idx].toLocaleString()} • Timezone: ${data.timezone_abbreviation}
-                        </p>
-                        <p class="hint">
-                            Est. next/prev extremes (heuristic):
-                            ${hi.i !== idx ? `High ≈ ${times[hi.i].toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (${hi.v.toFixed(2)}${unit})` : ''}
-                            ${hi.i !== idx && lo.i !== idx ? ' • ' : ''}
-                            ${lo.i !== idx ? `Low ≈ ${times[lo.i].toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (${lo.v.toFixed(2)}${unit})` : ''}
-                        </p>
-                    `;
-                } else {
-                    throw new Error("Hourly sea level data not available in the API response.");
-                }
-
-            } catch (error) {
-                logToDebug(`Tide fetch ERROR: ${error.message}`);
-                console.error("Failed to fetch tide data:", error);
-                tideEl.innerHTML = `<p style="color: #ff8a8a;">Could not fetch sea level.</p><p class="hint">${error.message}</p>`;
-            }
-        }
-    </script>
-
+      return `
+        <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img">
+          <path d="${d}" fill="none" stroke="rgba(234,242,255,.9)" stroke-width="2"/>
+          <line x1="${nowX}" y1="0" x2="${nowX}" y2="${h}" class="nowline"/>
+        </svg>
+      `;
+    }
+  </script>
 </body>
 </html>
